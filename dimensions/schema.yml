@@ -1,0 +1,132 @@
+version: 2
+
+models:
+  - name: dim_product
+    description: "Product dimension with catalog information"
+    columns:
+      - name: product_key
+        description: "Surrogate key for product"
+        tests:
+          - not_null
+          - unique
+      
+      - name: product_id
+        description: "Natural key - product identifier"
+        tests:
+          - not_null
+          - unique
+      
+      - name: product_name
+        description: "Product name"
+        tests:
+          - not_null
+      
+      - name: min_price
+        description: "Minimum price"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      
+      - name: max_price
+        description: "Maximum price"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= min_price"
+
+  - name: dim_customer
+    description: "Customer dimension"
+    columns:
+      - name: user_id
+        description: "User identifier (primary key)"
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_store
+    description: "Store dimension"
+    columns:
+      - name: store_id
+        description: "Store identifier (primary key)"
+        tests:
+          - not_null
+          - unique
+      
+      - name: store_name
+        description: "Store name"
+        tests:
+          - not_null
+
+  - name: dim_location
+    description: "Location dimension"
+    columns:
+      - name: location_key
+        description: "Surrogate key for location"
+        tests:
+          - not_null
+          - unique
+      
+      - name: country_name
+        description: "Country name"
+        tests:
+          - not_null
+
+  - name: dim_date
+    description: "Date dimension"
+    columns:
+      - name: date_key
+        description: "Date key in YYYYMMDD format"
+        tests:
+          - not_null
+          - unique
+      
+      - name: date_day
+        description: "Actual date"
+        tests:
+          - not_null
+          - unique
+      
+      - name: year
+        description: "Year"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "BETWEEN 2020 AND 2030"
+      
+      - name: quarter
+        description: "Quarter"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "BETWEEN 1 AND 4"
+      
+      - name: month
+        description: "Month"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "BETWEEN 1 AND 12"
+      
+      - name: day_of_week
+        description: "Day of week (1=Sunday, 7=Saturday)"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "BETWEEN 1 AND 7"
+
+  - name: dim_currency_rate
+    description: "Currency exchange rates to USD"
+    columns:
+      - name: currency_code
+        description: "Currency code (primary key)"
+        tests:
+          - not_null
+          - unique
+      
+      - name: exchange_rate_to_usd
+        description: "Exchange rate to USD"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
