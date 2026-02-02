@@ -729,7 +729,7 @@ dbt test --select test_type:unique
 
 ---
 
-### Phase 6: Mart Layer & Documentation (2-3  )
+### Phase 6: Mart Layer & Documentation 
 
 #### Challenge 12: Dataset Schema Organization
 
@@ -1359,8 +1359,8 @@ models/
 ✅ **Known Issues Documented:** 1 expected warning with business context  
 ✅ **Production Ready:** 98.8% pass rate ensures data quality  
 
+
 **Philosophy:** Tests protect data quality while documenting known limitations transparently.
-```
 
 ---
 ## Data Model Documentation
@@ -1433,6 +1433,7 @@ models/
 │city_name       │  │   date          │  │ country       │
 └────────────────┘  │ total_orders    │  └───────────────┘
                     └─────────────────┘
+
 ```
 
 ### Grain Definition
@@ -1768,9 +1769,10 @@ SUM(quantity)
 │                                                      │
 └─────────────────────────────────────────────────────┘
 
-https://lookerstudio.google.com/s/oFI8wInlCtY
-
 ```
+
+- link to the report **https://lookerstudio.google.com/s/oFI8wInlCtY**
+
 
 **Charts to Add:**
 
