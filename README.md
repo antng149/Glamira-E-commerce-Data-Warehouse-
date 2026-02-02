@@ -1,4 +1,5 @@
-cat > README.md << 'EOF'
+> 📖 **[Đọc phiên bản tiếng Việt / Read Vietnamese version](README_VI.md)**
+
 # Glamira E-commerce Data Warehouse Project
 
 ---
