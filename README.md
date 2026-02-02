@@ -208,7 +208,7 @@ k20-de-2025 (BigQuery Project)
 
 ## Implementation Journey
 
-### Phase 1: Project Setup (2 days)
+### Phase 1: Project Setup 
 
 #### Initial Setup
 ```bash
@@ -248,7 +248,7 @@ sources:
 
 ---
 
-### Phase 2: Staging Layer (3-4 days)
+### Phase 2: Staging Layer 
 
 #### Challenge 1: Nested Cart Data
 
@@ -426,7 +426,7 @@ WHERE price_original >= 0  -- ✅ Allows free items
 
 ---
 
-### Phase 3: Dimension Layer (3-4 days)
+### Phase 3: Dimension Layer 
 
 #### Challenge 5: Missing Product References
 
@@ -548,7 +548,7 @@ CAST(
 
 ---
 
-### Phase 4: Fact Table (2-3 days)
+### Phase 4: Fact Table 
 
 #### Challenge 7: Transaction ID Confusion
 
@@ -617,7 +617,7 @@ CHF,1.12
 
 ---
 
-### Phase 5: Testing & Validation (2-3 days)
+### Phase 5: Testing & Validation 
 
 #### Challenge 9: YAML Configuration Errors
 
@@ -729,7 +729,7 @@ dbt test --select test_type:unique
 
 ---
 
-### Phase 6: Mart Layer & Documentation (2-3 days)
+### Phase 6: Mart Layer & Documentation (2-3  )
 
 #### Challenge 12: Dataset Schema Organization
 
@@ -1061,7 +1061,7 @@ Decision: OBT (35K rows is manageable, usability > micro-optimization)
 | **Customers** | 15,100 | Unique users |
 | **Stores** | 65 | International presence |
 | **Countries** | 150+ | Global customer base |
-| **Date Range** | 2019-2029 | 4,017 days |
+| **Date Range** | 2019-2029 | 4,017   |
 | **Currencies Normalized** | 52 | From 80+ variations |
 
 #### Data Quality Metrics
@@ -1767,6 +1767,9 @@ SUM(quantity)
 │   (product, category, orders, revenue)              │
 │                                                      │
 └─────────────────────────────────────────────────────┘
+
+https://lookerstudio.google.com/s/oFI8wInlCtY
+
 ```
 
 **Charts to Add:**
