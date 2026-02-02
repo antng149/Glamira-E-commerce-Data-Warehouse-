@@ -1,11 +1,6 @@
 cat > README.md << 'EOF'
 # Glamira E-commerce Data Warehouse Project
 
-**Course:** K20 Data Engineering 2025  
-**Student:** Anthony Nguyen  
-**Project Duration:** 3 weeks  
-**Status:** ✅ Complete
-
 ---
 
 ## Table of Contents
