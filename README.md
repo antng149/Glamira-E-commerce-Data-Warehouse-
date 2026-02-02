@@ -1187,6 +1187,181 @@ k20_de_2025/
 
 ---
 
+## Testing Framework
+
+### Overview
+
+**Total Coverage:** 82 data quality tests across all layers  
+**Test Success Rate:** 98.8% (81 PASS, 1 WARN, 0 ERROR)  
+**Test Definitions:** All tests are defined in `schema.yml` files within each model directory
+
+### Test Distribution
+```
+models/
+├── staging/schema.yml           # 24 tests - Data cleaning validation
+├── dimensions/schema.yml        # 36 tests - Reference data integrity  
+├── facts/schema.yml             # 21 tests - Transaction metrics validation
+└── marts/schema.yml             # 1 test  - Known data limitation (WARNING)
+```
+
+### What We Test
+
+#### 1. **Data Integrity (40 tests)**
+- **Not Null:** Critical fields must have values (31 tests)
+- **Unique:** Primary keys are unique (9 tests)
+
+**Purpose:** Ensure no missing data in key fields
+
+**Example:**
+```yaml
+- name: product_id
+  tests:
+    - not_null    # No missing product IDs
+    - unique      # No duplicate products
+```
+
+---
+
+#### 2. **Referential Integrity (7 tests)**
+- **Relationships:** Foreign keys exist in parent tables
+
+**Purpose:** Ensure JOINs won't create orphaned records (except documented cases)
+
+**Example:**
+```yaml
+- name: date_key
+  tests:
+    - relationships:
+        to: ref('dim_date')
+        field: date_key
+```
+
+**Special Case - Known Warning:**
+```yaml
+- name: product_key
+  tests:
+    - relationships:
+        to: ref('dim_product')
+        field: product_key
+        config:
+          severity: warn  # 966 orders (3.3%) have discontinued products
+```
+
+---
+
+#### 3. **Business Rules (32 tests)**
+- **Expression Validation:** Custom logic using dbt_utils
+
+**Purpose:** Enforce business constraints on data values
+
+**Examples:**
+```yaml
+# Prices can be zero (free items allowed)
+- name: price_original
+  tests:
+    - dbt_utils.expression_is_true:
+        expression: ">= 0"
+
+# Quantities must be positive
+- name: quantity
+  tests:
+    - dbt_utils.expression_is_true:
+        expression: "> 0"
+```
+
+---
+
+#### 4. **Data Quality Constraints (3 tests)**
+- **Accepted Values:** Restrict to known valid values
+
+**Purpose:** Catch data entry errors or invalid codes
+
+**Example:**
+```yaml
+- name: price_currency
+  tests:
+    - accepted_values:
+        values: ['EUR', 'USD', 'BGN', 'GBP', 'TRY', 'PLN']
+```
+
+---
+
+### Running Tests
+```bash
+# Run all 82 tests
+dbt test
+
+# Expected output:
+# PASS=81 WARN=1 ERROR=0 SKIP=0 TOTAL=82
+
+# Run tests for specific model
+dbt test --select stg_sales_orders
+
+# Run tests for specific layer
+dbt test --select staging        # 24 tests
+dbt test --select dimensions     # 36 tests
+dbt test --select facts          # 21 tests
+```
+
+---
+
+### The One Warning (Expected)
+
+**Warning:** `relationships_fact_sales_order_tt_product_key__product_key__ref_dim_product_`
+
+**What it means:**
+- 966 orders (3.3%) reference products not in catalog
+- Products were discontinued after original scraping
+- **Business Decision:** Keep revenue data, accept missing product attributes
+
+**Impact:**
+- ✅ All revenue data preserved
+- ❌ 3.3% of orders lack product details (category, name, etc.)
+
+**Workaround:**
+```sql
+-- Filter out unknown products when product attributes needed
+WHERE product_key > 0
+```
+
+**Why it's a warning (not error):**
+- Documented limitation
+- Business prefers complete revenue over perfect product coverage
+- Users can filter when needed
+
+---
+
+### Test Files Location
+
+All test definitions are in the repository:
+```
+models/
+├── staging/
+│   ├── schema.yml              # ← Tests for stg_* models
+│   └── sources.yml             # ← Source definitions
+├── dimensions/
+│   └── schema.yml              # ← Tests for dim_* models
+├── facts/
+│   └── schema.yml              # ← Tests for fact_* models
+└── marts/
+    └── schema.yml              # ← Tests for mart_* models
+```
+
+**View test definitions:** Open any `schema.yml` file to see complete test configurations
+
+---
+
+### Key Takeaways
+
+✅ **Comprehensive Coverage:** Every critical field tested  
+✅ **Automated Validation:** Tests run on every dbt build  
+✅ **Known Issues Documented:** 1 expected warning with business context  
+✅ **Production Ready:** 98.8% pass rate ensures data quality  
+
+**Philosophy:** Tests protect data quality while documenting known limitations transparently.
+```
+
+---
 ## Data Model Documentation
 
 ### Entity Relationship Diagram
@@ -1739,126 +1914,6 @@ dbt build --select model_name+       # Model + downstream + tests
 
 ---
 
-## Future Enhancements
-
-### Phase 2: Advanced Analytics (Recommended)
-
-#### 1. Customer Segmentation (RFM Analysis)
-```sql
-CREATE OR REPLACE TABLE `k20-de-2025.dbt_anthony_central1_marts.mart_customer_rfm` AS
-WITH customer_metrics AS (
-    SELECT 
-        user_id,
-        MAX(order_date) AS last_order_date,
-        COUNT(DISTINCT order_id) AS frequency,
-        SUM(line_total_usd) AS monetary_value
-    FROM `k20-de-2025.dbt_anthony_central1_marts.mart_sales_complete`
-    WHERE price_usd > 0
-    GROUP BY user_id
-)
-SELECT 
-    user_id,
-    DATE_DIFF(CURRENT_DATE(), last_order_date, DAY) AS recency_days,
-    frequency,
-    monetary_value,
-    NTILE(5) OVER (ORDER BY DATE_DIFF(CURRENT_DATE(), last_order_date, DAY) DESC) AS recency_score,
-    NTILE(5) OVER (ORDER BY frequency) AS frequency_score,
-    NTILE(5) OVER (ORDER BY monetary_value) AS monetary_score
-FROM customer_metrics;
-```
-
-#### 2. Product Affinity Analysis
-```sql
--- Products frequently bought together
-WITH product_pairs AS (
-    SELECT 
-        a.product_id AS product_a,
-        b.product_id AS product_b,
-        a.order_id
-    FROM `k20-de-2025.dbt_anthony_central1_marts.mart_sales_complete` a
-    JOIN `k20-de-2025.dbt_anthony_central1_marts.mart_sales_complete` b
-        ON a.order_id = b.order_id
-        AND a.product_id < b.product_id
-    WHERE a.is_unknown_product = FALSE 
-      AND b.is_unknown_product = FALSE
-)
-SELECT 
-    product_a,
-    product_b,
-    COUNT(DISTINCT order_id) AS times_bought_together
-FROM product_pairs
-GROUP BY product_a, product_b
-HAVING times_bought_together >= 10
-ORDER BY times_bought_together DESC;
-```
-
----
-
-### Phase 3: Incremental Loading
-
-#### Current State
-- All models rebuild from scratch: `materialized='table'`
-- Fast enough for 35K rows
-- Simple to understand and maintain
-
-#### Future State (for millions of rows)
-```sql
--- models/facts/fact_sales_order_tt.sql
-{{ config(
-    materialized='incremental',
-    unique_key='sales_order_item_key',
-    partition_by = {
-        'field': 'order_date',
-        'data_type': 'date',
-        'granularity': 'day'
-    }
-) }}
-
--- Incremental logic
-{% if is_incremental() %}
-    WHERE order_date > (SELECT MAX(order_date) FROM {{ this }})
-{% endif %}
-```
-
-**Benefits:**
-- Only process new data
-- 10-100x faster rebuilds
-- Lower BigQuery costs
-
----
-
-## Appendix
-
-### A. Glossary
-
-**AOV (Average Order Value):** Total revenue / number of orders
-
-**Cohort:** Group of customers who share a common characteristic
-
-**DAG (Directed Acyclic Graph):** Visual representation of model dependencies in dbt
-
-**Dimension Table:** Reference data (products, customers, stores)
-
-**Fact Table:** Transactional data with metrics (sales, revenue)
-
-**Grain:** Level of detail in a fact table
-
-**LTV (Lifetime Value):** Total revenue from a customer over their lifetime
-
-**Mart:** Business-friendly denormalized table optimized for reporting
-
-**OBT (One Big Table):** Single denormalized table with all dimensions and facts
-
-**Partition:** BigQuery feature to divide table by date for faster queries
-
-**Star Schema:** Fact table surrounded by dimension tables
-
-**Surrogate Key:** Artificial primary key (vs natural key from source system)
-
-**Unknown Member:** Special dimension row for handling missing reference data
-
----
-
 ### B. Resources & References
 
 #### Documentation
@@ -1871,35 +1926,7 @@ ORDER BY times_bought_together DESC;
 - [Kimball Dimensional Modeling](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/kimball-techniques/)
 - [BigQuery Best Practices](https://cloud.google.com/bigquery/docs/best-practices)
 
----
-
-### C. Change Log
-
-| Date | Version | Changes | Author |
-|------|---------|---------|--------|
-| 2025-02-02 | 1.0 | Initial release | Anthony Nguyen |
-| | | - 11 models built | |
-| | | - 82 tests passing | |
-| | | - Comprehensive documentation | |
 
 ---
 
-## Contact
 
-**Project Maintainer:** Anthony Nguyen  
-**Course:** K20 Data Engineering 2025
-
-For questions about:
-- **Technical implementation:** See code comments and dbt docs
-- **Business logic:** See this README and schema descriptions
-- **Data quality:** See test definitions in `models/*/schema.yml`
-- **Dashboard setup:** See Dashboard Setup Guide section
-
----
-
-**📊 End of Documentation**
-
-**Project Status:** ✅ Production Ready  
-**Last Updated:** February 2, 2025  
-**Next Review:** March 2, 2025
-EOF
