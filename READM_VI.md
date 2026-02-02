@@ -377,6 +377,12 @@ SELECT * FROM unknown_member
 | **Thời gian Query Mart** | <1 giây | <2s |
 | **Thời gian Load Dashboard** | 2-3 giây | <5s |
 
+
+
+## Áp dụng LookerStudio để vẽ Report
+
+link cho report ***https://lookerstudio.google.com/s/utEzzzPyL4g***
+
 ---
 
 ## Framework Kiểm Tra (Testing)
