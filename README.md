@@ -1,4 +1,4 @@
-> 📖 **[Đọc phiên bản tiếng Việt / Read Vietnamese version](README_VI.md)**
+> 📖 **[Đọc phiên bản tiếng Việt / Read Vietnamese version](READM_VI.md)**
 
 # Glamira E-commerce Data Warehouse Project
 
