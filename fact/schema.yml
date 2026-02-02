@@ -1,0 +1,111 @@
+version: 2
+
+models:
+  - name: fact_sales_order_tt
+    description: "Transaction-level sales order fact table"
+    columns:
+      - name: sales_order_item_key
+        description: "Surrogate key for each line item"
+        tests:
+          - not_null
+      
+      - name: date_key
+        description: "Foreign key to dim_date"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_key
+
+
+      - name: product_key
+        description: |
+          Foreign key to dim_product. 
+          
+          Note: ~966 orders (3.3%) map to product_key = -1 due to discontinued 
+          products or incomplete catalog coverage. Revenue data is preserved but 
+          product attributes are unavailable for these orders.
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product')
+              field: product_key
+              config:
+                severity: warn 
+      
+      
+      - name: user_id
+        description: "Foreign key to dim_customer"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: user_id
+      
+      - name: store_id
+        description: "Foreign key to dim_store"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_store')
+              field: store_id
+      
+      - name: location_key
+        description: "Foreign key to dim_location"
+        tests:
+          - relationships:
+              to: ref('dim_location')
+              field: location_key
+      
+      - name: currency_code
+        description: "Foreign key to dim_currency_rate"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_currency_rate')
+              field: currency_code
+      
+      - name: order_id
+        description: "Order identifier"
+        tests:
+          - not_null
+      
+      - name: order_date
+        description: "Date of the order"
+        tests:
+          - not_null
+      
+      - name: quantity
+        description: "Quantity ordered"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+      
+      - name: price_original
+        description: "Price in original currency"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      
+      - name: price_usd
+        description: "Price converted to USD"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      
+      - name: line_total_usd
+        description: "Total line amount in USD (price_usd * quantity)"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      
+      - name: is_paypal
+        description: "Whether payment was via PayPal"
+        tests:
+        - not_null
+        - dbt_utils.expression_is_true:
+            expression: "IN (true, false)"
