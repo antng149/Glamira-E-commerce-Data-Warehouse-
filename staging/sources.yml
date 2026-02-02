@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  - name: glamira_countly
+    database: k20-de-2025
+    schema: glamira_countly
+    tables:
+      - name: summary_final_v6
+        description: "Event tracking data with checkout transactions"
+      
+      - name: ip_locations
+        description: "IP address to location mapping"
+
+  - name: glamira_project6
+    database: k20-de-2025
+    schema: glamira_project6
+    tables:
+      - name: products_raw
+        description: "Product catalog from web scraping"
